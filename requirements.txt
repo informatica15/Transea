@@ -1,0 +1,4 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+deep-translator==1.11.4
+gTTS==2.5.3
