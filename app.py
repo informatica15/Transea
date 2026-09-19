@@ -23,11 +23,13 @@ Generating audio server-side with gTTS sidesteps that entirely.
 
 from flask import Flask, render_template, request, jsonify, send_file
 from flask_cors import CORS
-from deep_translator import GoogleTranslator
+from deep_translator import GoogleTranslator, MyMemoryTranslator
 from gtts import gTTS
 import io
+import os
 
-app = Flask(__name__)
+template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
+app = Flask(__name__, template_folder=template_dir)
 CORS(app)  # allows the frontend to call this API from a different origin during development
 
 # Map the BCP-47 codes the frontend uses (e.g. "en-US") to the short
@@ -51,8 +53,10 @@ def translate():
     """
     data = request.get_json(silent=True) or {}
     text = (data.get("text") or "").strip()
-    source = short_code(data.get("source", "en"))
-    target = short_code(data.get("target", "en"))
+    raw_source = data.get("source", "en-US")
+    raw_target = data.get("target", "ta-IN")
+    source = short_code(raw_source)
+    target = short_code(raw_target)
 
     if not text:
         return jsonify({"error": "No text provided"}), 400
@@ -62,7 +66,11 @@ def translate():
         return jsonify({"translated_text": text})
 
     try:
-        translated = GoogleTranslator(source=source, target=target).translate(text)
+        try:
+            translated = GoogleTranslator(source=source, target=target).translate(text)
+        except Exception:
+            # Fallback to MyMemoryTranslator when Google rate-limits (HTTP 429)
+            translated = MyMemoryTranslator(source=raw_source, target=raw_target).translate(text)
         return jsonify({"translated_text": translated})
     except Exception as exc:
         # Common causes: unsupported language pair, no internet access,

@@ -584,10 +584,10 @@
           target: targetSel.value
         })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok || data.error) {
-        throw new Error(data.error || 'Translation failed');
+        throw new Error(data.error || `Translation request failed (${res.status})`);
       }
 
       translationText.textContent = data.translated_text;
@@ -595,7 +595,8 @@
       stage.classList.remove('translating');
       speakTranslation(data.translated_text);
     } catch (err) {
-      hint.textContent = 'Translation failed — check your connection';
+      console.error('Translation error:', err);
+      hint.textContent = err.message || 'Translation failed — check your connection';
       stage.classList.remove('translating');
     }
   }
