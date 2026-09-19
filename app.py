@@ -68,12 +68,29 @@ def translate_text(text: str, source_bcp47: str, target_bcp47: str) -> str:
 
 @app.route("/", methods=["GET"])
 @app.route("/index.html", methods=["GET"])
-@app.route("/api", methods=["GET"])
-@app.route("/api/", methods=["GET"])
-@app.route("/api/index", methods=["GET"])
-@app.route("/api/index/", methods=["GET"])
 def home():
     """Serves the TranSea voice UI."""
+    return render_template("index.html")
+
+
+@app.route("/api", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/index", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/index/", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/index.py", methods=["GET", "POST", "OPTIONS"])
+def vercel_entrypoint():
+    """
+    Handles Vercel routing when incoming requests are rewritten to /api/index or /api/index.py.
+    Dispatches POST requests to translate or speak based on payload, preventing 405 errors.
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        if "source" in data or "target" in data:
+            return translate()
+        if "lang" in data:
+            return speak()
     return render_template("index.html")
 
 
