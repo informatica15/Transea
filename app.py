@@ -39,12 +39,23 @@ def short_code(bcp47_code: str) -> str:
 
 
 @app.route("/")
+@app.route("/index.html")
+@app.route("/api")
+@app.route("/api/index")
+@app.route("/api/index.py")
 def home():
     """Serves the TranSea voice UI."""
     return render_template("index.html")
 
 
+@app.errorhandler(404)
+def not_found(e):
+    """Fallback handler to prevent 404 errors for UI routes."""
+    return render_template("index.html")
+
+
 @app.route("/translate", methods=["POST"])
+@app.route("/api/translate", methods=["POST"])
 def translate():
     """
     Expects JSON: { "text": "...", "source": "en-US", "target": "ta-IN" }
@@ -79,6 +90,7 @@ def translate():
 
 
 @app.route("/speak", methods=["POST"])
+@app.route("/api/speak", methods=["POST"])
 def speak():
     """
     Expects JSON: { "text": "...", "lang": "ta-IN" }
