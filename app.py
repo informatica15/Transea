@@ -66,8 +66,12 @@ def translate_text(text: str, source_bcp47: str, target_bcp47: str) -> str:
     return text
 
 
-@app.route("/")
-@app.route("/index.html")
+@app.route("/", methods=["GET"])
+@app.route("/index.html", methods=["GET"])
+@app.route("/api", methods=["GET"])
+@app.route("/api/", methods=["GET"])
+@app.route("/api/index", methods=["GET"])
+@app.route("/api/index/", methods=["GET"])
 def home():
     """Serves the TranSea voice UI."""
     return render_template("index.html")
@@ -75,10 +79,10 @@ def home():
 
 @app.errorhandler(404)
 def not_found(e):
-    """Fallback handler for UI routes, while returning 404 JSON for missing API routes."""
-    if request.path.startswith("/api/") or request.path in ["/translate", "/speak"]:
-        return jsonify({"error": "Not Found"}), 404
-    return render_template("index.html")
+    """Fallback handler: any browser GET request serves the UI, non-GET returns JSON error."""
+    if request.method == "GET":
+        return render_template("index.html"), 200
+    return jsonify({"error": "Endpoint not found"}), 404
 
 
 @app.route("/translate", methods=["GET", "POST", "OPTIONS"])
